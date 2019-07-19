@@ -54,7 +54,7 @@ const setState = <T>(f: (s: T) => T, storeName: string = 'global') => {
   });
 };
 
-export const useStore = <T>(name: string, initial: T = null) => ({
+export const useStore = <T>(name: string) => ({
   setState: (f: (s: T) => T) => {
     actions$.emit({
       eval: s => f(s[name]),
