@@ -19,3 +19,6 @@
 </ul>
 
 <router-outlet></router-outlet>
+
+<button (click)="onClick$.emit($event)">Click</button>
+<p>{{counter$ | async}}</p>
