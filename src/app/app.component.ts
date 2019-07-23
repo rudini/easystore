@@ -6,6 +6,7 @@ import { tap } from 'rxjs/operators';
 // state of component
 interface CounterState {
   count: number;
+  notChangedNumber: number;
 }
 
 // state definition
@@ -26,7 +27,7 @@ export class AppComponent {
 
   constructor() {
 
-    const store = useStore<State>('counterState', { count: 0 });
+    const store = useStore<State>('counterState', { count: 0, notChangedNumber: 100 });
 
     this.counter$ = store.useState(state => state.count); // .pipe(map(state => state.count), distinctUntilChanged());
     this.onClick$.pipe(
@@ -36,6 +37,7 @@ export class AppComponent {
     // this.onClick$.pipe(
     //     tap(() => console.log('clicked')))
     //     .subscribe(() => store.setState(state => {
+    //       console.log('state', state);
     //       state.count = state.count + 1;
     //       return state;
     //     }));  // throws exception because of changing the state reference!!!!!
