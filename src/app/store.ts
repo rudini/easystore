@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { scan, map, shareReplay, tap, distinctUntilChanged } from 'rxjs/operators';
 
 interface Action<T, K extends keyof T> {
-  eval: (state: any) => T[K];
+  eval: (state: T[K]) => T[K];
   name: K;
 }
 
