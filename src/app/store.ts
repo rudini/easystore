@@ -1,19 +1,19 @@
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { scan, map, startWith, shareReplay, tap, distinctUntilChanged } from 'rxjs/operators';
+import { scan, map, shareReplay, tap, distinctUntilChanged } from 'rxjs/operators';
 
-interface Action<T> {
-  eval: (state: any) => T;
-  name: string;
+interface Action<T, K extends keyof T> {
+  eval: (state: any) => T[K];
+  name: K;
 }
 
 const nameMap = [];
 
 let data$: Observable<any>;
-const actions$ = new EventEmitter<Action<any>>();
+const actions$ = new EventEmitter<Action<any, any>>();
 
 data$ = actions$.pipe(
-  scan((state: any, action: Action<any>) => {
+  scan((state: any, action: Action<any, any>) => {
     console.log('before', state);
     console.log('evaluated action', action.eval(state));
     const freezedEval = Object.freeze(action.eval(state));
@@ -25,11 +25,10 @@ data$ = actions$.pipe(
 
 data$.subscribe();
 
-
-export const useStore = <T>(name: string, initial: T = null) => {
+export const useStore = <T>(name: keyof T, initial: T[keyof T] = null) => {
 
   // if store not initialized, throw error
-  if (!nameMap.includes(name) && initial === null) {
+  if (!nameMap.includes(name) &&  initial === null) {
     throw new Error(`store: ${name} must be initialized first!!`);
   }
 
@@ -42,13 +41,13 @@ export const useStore = <T>(name: string, initial: T = null) => {
     nameMap.push(name);
   }
   return {
-    setState: (f: (s: T) => T) => {
+    setState: (f: (s: T[keyof T]) => T[keyof T]) => {
       actions$.emit({
         eval: s => f(s[name]),
         name
       });
     },
-    useState: (f: (s: T) => any = null) => data$.pipe(
+    useState: (f: (s: T[keyof T]) => any = null) => data$.pipe(
         map(s => s[name]),
         map(s => f ? f(s) : s),
         distinctUntilChanged()

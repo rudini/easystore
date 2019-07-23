@@ -1,10 +1,16 @@
 import { Component, EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
 import { useStore } from './store';
-import { tap, map, distinctUntilChanged } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
+// state of component
 interface CounterState {
   count: number;
+}
+
+// state definition
+interface State {
+  counterState: CounterState;
 }
 
 @Component({
@@ -20,7 +26,7 @@ export class AppComponent {
 
   constructor() {
 
-    const store = useStore<CounterState>('counterState', { count: 0 });
+    const store = useStore<State>('counterState', { count: 0 });
 
     this.counter$ = store.useState(state => state.count); // .pipe(map(state => state.count), distinctUntilChanged());
     this.onClick$.pipe(
@@ -35,4 +41,3 @@ export class AppComponent {
     //     }));  // throws exception because of changing the state reference!!!!!
   }
 }
-
