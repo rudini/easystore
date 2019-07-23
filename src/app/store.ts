@@ -25,7 +25,7 @@ data$ = actions$.pipe(
 
 data$.subscribe();
 
-export const useStore = <T>(name: keyof T, initial: T[keyof T] = null) => {
+export const useStore = <T, S = T[keyof T]>(name: keyof T, initial: S = null) => {
 
   // if store not initialized, throw error
   if (!nameMap.includes(name) &&  initial === null) {
@@ -41,13 +41,13 @@ export const useStore = <T>(name: keyof T, initial: T[keyof T] = null) => {
     nameMap.push(name);
   }
   return {
-    setState: (f: (s: T[keyof T]) => T[keyof T]) => {
+    setState: (f: (s: S) => S) => {
       actions$.emit({
         eval: s => f(s[name]),
         name
       });
     },
-    useState: (f: (s: T[keyof T]) => any = null) => data$.pipe(
+    useState: <O = S[keyof S]>(f: (s: S) => O = null): Observable<O> => data$.pipe(
         map(s => s[name]),
         map(s => f ? f(s) : s),
         distinctUntilChanged()
