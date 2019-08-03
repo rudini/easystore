@@ -32,7 +32,7 @@ export class AppComponent {
     this.counter$ = store.useState(state => state.count); // .pipe(map(state => state.count), distinctUntilChanged());
     this.onClick$.pipe(
       tap(() => console.log('clicked')))
-      .subscribe(() => store.setState(state => ({ ...state, count: state.count + 1})));
+      .subscribe(() => store.setState(state => ({ count: state.count + 1})));
 
     // this.onClick$.pipe(
     //     tap(() => console.log('clicked')))

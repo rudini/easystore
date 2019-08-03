@@ -30,6 +30,12 @@ data$ = actions$.pipe(
 
 data$.subscribe();
 
+// the useStore function can be used, when you want to share the state between component
+// and not store derived data to the store.
+
+// to inject shared state to a component, use "useStore('storeName')" without initial state
+// to use and initialize state, use "useState('storeName', { someData: {} })"
+
 export const useStore = <T, S = T[keyof T]>(
   name: keyof T,
   initial: S = null
