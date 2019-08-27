@@ -1,18 +1,20 @@
-import { Component, EventEmitter } from '@angular/core';
-import { Observable } from 'rxjs';
-import { useStore } from './store';
-import { tap } from 'rxjs/operators';
+import { Component, EventEmitter } from '@angular/core'
+import { Observable } from 'rxjs'
+import { useStore } from './store'
+import { tap } from 'rxjs/operators'
 
 // state of component
 interface CounterState {
-  count: number;
-  notChangedNumber: number;
+  count: number
+  notChangedNumber: number
 }
 
 // state definition
 interface State {
-  counterState: CounterState;
+  counterState: CounterState
 }
+
+const incrementCounter = state => ({ count: state.count + 1 })
 
 @Component({
   selector: 'app-root',
@@ -20,19 +22,21 @@ interface State {
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'easystore';
+  title = 'easystore'
 
-  onClick$ = new EventEmitter();
-  counter$: Observable<number>;
+  onClick$ = new EventEmitter()
+  counter$: Observable<number>
 
   constructor() {
+    const store = useStore<State>('counterState', {
+      count: 0,
+      notChangedNumber: 100
+    })
 
-    const store = useStore<State>('counterState', { count: 0, notChangedNumber: 100 });
-
-    this.counter$ = store.useState(state => state.count); // .pipe(map(state => state.count), distinctUntilChanged());
-    this.onClick$.pipe(
-      tap(() => console.log('clicked')))
-      .subscribe(() => store.setState(state => ({ count: state.count + 1})));
+    this.counter$ = store.useState(state => state.count) // .pipe(map(state => state.count), distinctUntilChanged())
+    this.onClick$
+      .pipe(tap(() => console.log('clicked')))
+      .subscribe(() => store.setState(incrementCounter))
 
     // this.onClick$.pipe(
     //     tap(() => console.log('clicked')))
@@ -42,4 +46,9 @@ export class AppComponent {
     //       return state;
     //     }));  // throws exception because of changing the state reference!!!!!
   }
+}
+
+
+const useEffect = (action: Function) => {
+
 }

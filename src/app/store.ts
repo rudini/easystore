@@ -22,7 +22,11 @@ data$ = actions$.pipe(
   scan((state: any, action: Action<any, any>) => {
     console.log('before', state);
     console.log('evaluated action', action.eval(state));
-    return { ...state, [action.name]: { ...state[action.name], ...action.eval(state) }};
+    return {
+      ...state,
+      [action.name]: typeof action.eval(state) === 'object'
+        ? { ...state[action.name], ...action.eval(state) }
+        : action.eval(state)};
   }, {}),
   tap(state => console.log('after', state)),
   shareReplay(1)
@@ -56,6 +60,7 @@ export const useStore = <T, S = T[keyof T]>(
   return {
     setState: (f: ((s: S) => Partial<S>) | Partial<S>) => {
       if (f instanceof Function) {
+        console.log('actionName', f.name);
         actions$.emit({
           eval: s => f(Object.freeze(s[name])),
           name
