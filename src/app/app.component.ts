@@ -57,13 +57,13 @@ export class AppComponent {
 
 const loadCounterFromServer = () => of(10); // stub function
 
-const setLoadedCount = () => (state: CounterState) => ({ count: state.count, loading: false })
-const setError = err => of(() => ({ error: err, loading: false }))
+const setLoadedCount = (state: CounterState) => ({ count: state.count, loading: false })
+const setError = (error: Error) => () => ({ error: error, loading: false })
 const setLoading = () => ({ loading: true })
 
 const loadCounterEffect = () => loadCounterFromServer()
   .pipe(
-    map(setLoadedCount),
-    catchError(setError),
+    map(() => setLoadedCount),
+    catchError(err => of(setError(err))),
     startWith(setLoading)
   )
