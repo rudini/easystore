@@ -14,25 +14,27 @@ export type EffectFunction<S> = () => Observable<CommandFunction<S>>
 
 interface Action<T, K extends keyof T> {
   eval: (state: T[K]) => T[K]
-  name: K
+  featureStoreName: K
+  actionName: string
 }
 
-const nameMap = []
+const featureStoreMap = []
 
 let data$: Observable<any>
 const actions$ = new EventEmitter<Action<any, any>>()
 
 data$ = actions$.pipe(
   scan((state: any, action: Action<any, any>) => {
-    console.log('before', state);
-    console.log('evaluated action', action.eval(state))
-    return {
+    console.log(`${action.actionName}: previous state`, state);
+    console.log(`${action.actionName}: payload`, action.eval(state))
+    const nextState = {
       ...state,
-      [action.name]: typeof action.eval(state) === 'object'
-        ? { ...state[action.name], ...action.eval(state) }
+      [action.featureStoreName]: typeof action.eval(state) === 'object'
+        ? { ...state[action.featureStoreName], ...action.eval(state) }
         : action.eval(state)}
+    console.log(`${action.actionName}: next state`, nextState)
+    return nextState;
   }, {}),
-  tap(state => console.log('after', state)),
   shareReplay(1)
 );
 
@@ -45,55 +47,56 @@ data$.subscribe()
 // to use and initialize state, use "useState('storeName', { someData: {} })"
 
 export const useStore = <T, S = T[keyof T]>(
-  name: keyof T,
+  featureStoreName: keyof T,
   initial: S = null
 ) => {
   // if store not initialized, throw error
-  if (!nameMap.includes(name) && initial === null) {
-    throw new Error(`store: ${name} must be initialized first!!`)
+  if (!featureStoreMap.includes(featureStoreName) && initial === null) {
+    throw new Error(`store: ${featureStoreName} must be initialized first!!`)
   }
 
   // if store already exists, don't initialize
-  if (!nameMap.includes(name)) {
+  if (!featureStoreMap.includes(featureStoreName)) {
     actions$.emit({
       eval: state => initial,
-      name: name
+      featureStoreName: featureStoreName,
+      actionName: 'initial action'
     });
-    nameMap.push(name)
+    featureStoreMap.push(featureStoreName)
   }
   return {
     setState: (f: CommandFunction<S> | Partial<S>) => {
       if (f instanceof Function) {
-        console.log('actionName', f.name);
         actions$.emit({
-          eval: s => f(Object.freeze(s[name])),
-          name
+          eval: s => f(Object.freeze(s[featureStoreName])),
+          featureStoreName: featureStoreName,
+          actionName: f.name
         });
       } else {
         actions$.emit({
           eval: () => f,
-          name
+          featureStoreName: featureStoreName,
+          actionName: 'state'
         })
       }
     },
     useState: <O = S[keyof S]>(f: (s: S) => O = null): Observable<O> =>
       data$.pipe(
-        map(s => s[name]),
+        map(s => s[featureStoreName]),
         map(s => (f ? f(s) : s)),
         distinctUntilChanged()
       ),
     useEffect: (effect: EffectFunction<S>) => {
       const completed$ = new Subject();
       effect().pipe(takeUntil(completed$)).subscribe(f => {
-        console.log('actionName', f.name);
         actions$.emit({
-          eval: s => f(Object.freeze(s[name])),
-          name
+          eval: s => f(Object.freeze(s[featureStoreName])),
+          featureStoreName: featureStoreName,
+          actionName: f.name
         });
       }, noop, () => {
         completed$.next();
         completed$.complete();
-        console.log('completed')
       });
     }
   }

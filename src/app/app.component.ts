@@ -40,7 +40,7 @@ export class AppComponent {
 
     this.counter$ = store.useState(state => state.count) // .pipe(map(state => state.count), distinctUntilChanged())
     this.onClick$
-      .pipe(tap(() => console.log('clicked')))
+      // .pipe(tap(() => console.log('clicked')))
       .subscribe(() => store.setState(incrementCounter))
 
     store.useEffect(loadCounterEffect)
@@ -57,13 +57,13 @@ export class AppComponent {
 
 const loadCounterFromServer = () => of(10); // stub function
 
-const setLoadedCount = (state: CounterState) => ({ count: state.count, loading: false })
-const setError = (error: Error) => () => ({ error: error, loading: false })
-const setLoading = () => ({ loading: true })
+const countLoaded = (state: CounterState) => ({ count: state.count, loading: false })
+const errorLoadingCount = (error: Error) => () => ({ error: error, loading: false })
+const loadingCount = () => ({ loading: true })
 
 const loadCounterEffect = () => loadCounterFromServer()
   .pipe(
-    map(() => setLoadedCount),
-    catchError(err => of(setError(err))),
-    startWith(setLoading)
+    map(() => countLoaded),
+    catchError(err => of(errorLoadingCount(err))),
+    startWith(loadingCount)
   )
