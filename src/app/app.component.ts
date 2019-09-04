@@ -1,12 +1,14 @@
 import { Component, EventEmitter } from '@angular/core'
-import { Observable } from 'rxjs'
+import { Observable, of } from 'rxjs'
 import { useStore } from './store'
-import { tap } from 'rxjs/operators'
+import { tap, map, catchError, startWith } from 'rxjs/operators'
 
 // state of component
 interface CounterState {
   count: number
-  notChangedNumber: number
+  notChangedNumber: number,
+  error: Error,
+  loading: boolean
 }
 
 // state definition
@@ -14,7 +16,13 @@ interface State {
   counterState: CounterState
 }
 
-const incrementCounter = state => ({ count: state.count + 1 })
+const initialCounterState = {
+  count: 0,
+  notChangedNumber: 100,
+  loading: false,
+  error: null
+}
+const incrementCounter = (state: CounterState) => ({ count: state.count + 1 })
 
 @Component({
   selector: 'app-root',
@@ -28,15 +36,14 @@ export class AppComponent {
   counter$: Observable<number>
 
   constructor() {
-    const store = useStore<State>('counterState', {
-      count: 0,
-      notChangedNumber: 100
-    })
+    const store = useStore<State>('counterState', initialCounterState)
 
     this.counter$ = store.useState(state => state.count) // .pipe(map(state => state.count), distinctUntilChanged())
     this.onClick$
       .pipe(tap(() => console.log('clicked')))
       .subscribe(() => store.setState(incrementCounter))
+
+    store.useEffect(loadCounterEffect)
 
     // this.onClick$.pipe(
     //     tap(() => console.log('clicked')))
@@ -48,7 +55,15 @@ export class AppComponent {
   }
 }
 
+const loadCounterFromServer = () => of(10); // stub function
 
-const useEffect = (action: Function) => {
+const setLoadedCount = () => (state: CounterState) => ({ count: state.count, loading: false })
+const setError = err => of(() => ({ error: err, loading: false }))
+const setLoading = () => ({ loading: true })
 
-}
+const loadCounterEffect = () => loadCounterFromServer()
+  .pipe(
+    map(setLoadedCount),
+    catchError(setError),
+    startWith(setLoading)
+  )
