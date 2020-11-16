@@ -1,28 +1,9 @@
 import { Component, EventEmitter } from '@angular/core'
-import { Observable, of } from 'rxjs'
-import { useStore } from './store'
-import { tap, map, catchError, startWith } from 'rxjs/operators'
+import { Observable } from 'rxjs'
+import { dispatch, select, dispatchEffect } from './app.state'
+import { incrementCounterAction } from './app.action'
+import { loadCounterEffect } from './app.effect'
 
-// state of component
-interface CounterState {
-  count: number
-  notChangedNumber: number,
-  error: Error,
-  loading: boolean
-}
-
-// state definition
-interface State {
-  counterState: CounterState
-}
-
-const initialCounterState = {
-  count: 0,
-  notChangedNumber: 100,
-  loading: false,
-  error: null
-}
-const incrementCounter = (state: CounterState) => ({ count: state.count + 1 })
 
 @Component({
   selector: 'app-root',
@@ -36,14 +17,13 @@ export class AppComponent {
   counter$: Observable<number>
 
   constructor() {
-    const store = useStore<State>('counterState', initialCounterState)
 
-    this.counter$ = store.useState(state => state.count) // .pipe(map(state => state.count), distinctUntilChanged())
+    this.counter$ = select(state => state.count) // .pipe(map(state => state.count), distinctUntilChanged())
     this.onClick$
       // .pipe(tap(() => console.log('clicked')))
-      .subscribe(() => store.setState(incrementCounter))
+      .subscribe(() => dispatch(incrementCounterAction))
 
-    store.useEffect(loadCounterEffect)
+    dispatchEffect(loadCounterEffect) // effect must complete
 
     // this.onClick$.pipe(
     //     tap(() => console.log('clicked')))
@@ -55,15 +35,4 @@ export class AppComponent {
   }
 }
 
-const loadCounterFromServer = () => of(10); // stub function
 
-const countLoaded = (state: CounterState) => ({ count: state.count, loading: false })
-const errorLoadingCount = (error: Error) => () => ({ error: error, loading: false })
-const loadingCount = () => ({ loading: true })
-
-const loadCounterEffect = () => loadCounterFromServer()
-  .pipe(
-    map(() => countLoaded),
-    catchError(err => of(errorLoadingCount(err))),
-    startWith(loadingCount)
-  )
