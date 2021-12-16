@@ -7,6 +7,8 @@ import {
   distinctUntilChanged,
   takeUntil} from 'rxjs/operators';
 
+let debug;
+
 export type CommandFunction<S> = (s: S) => Partial<S>
 export type EffectFunction<S> = () => Observable<CommandFunction<S>>
 
@@ -26,7 +28,7 @@ data$ = actions$.pipe(
       ...state,
       ...action.eval(state)
     }
-    console.log(`${action.actionName}: next state`, nextState)
+    debug && console.log(`${action.actionName}: next state`, nextState);
     return nextState;
   }, {}),
   shareReplay(1)
@@ -36,9 +38,9 @@ data$.subscribe()
 
 // to use and initialize state, use "useState('storeName', { someData: {} })"
 
-export const useStore = <S>(
-  initial: S = null
-) => {
+export const useStore = <S>(initial: S = null, debugMode = false) => {
+  debug = debugMode;
+  
   if (initial) {
     actions$.emit({
       actionName: 'setInitialState',
@@ -49,7 +51,7 @@ export const useStore = <S>(
     setState: (f: CommandFunction<S> | Partial<S>) => {
       if (f instanceof Function) {
         actions$.emit({
-          eval: s => f(Object.freeze(s)),
+          eval: s => f(debug ? Object.freeze(s) : s),
           actionName: f.name
         });
       } else {
@@ -68,7 +70,7 @@ export const useStore = <S>(
       const completed$ = new Subject();
       effect().pipe(takeUntil(completed$)).subscribe(f => {
         actions$.emit({
-          eval: s => f(Object.freeze(s)),
+          eval: s => s => f(debug ? Object.freeze(s) : s),
           actionName: f.name || effect.name
         });
       }, noop, () => {
